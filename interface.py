@@ -2,6 +2,24 @@ import tkinter as tk
 from tkinter import Scrollbar
 
 
+class Sommet():
+    def __init__(self):
+        pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class MainApplication(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
@@ -59,7 +77,9 @@ class MainApplication(tk.Frame):
 
         # Dessine un petit cercle pour représenter le point d'intersection
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
-        self.canvas.create_oval(x-10, y-10, x+10, y+10, fill="red")
+        self.canvas.create_oval(x-10, y-10, x+10, y+10
+        
+        , fill="red")
 
 
 root = tk.Tk()
