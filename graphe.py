@@ -1,8 +1,9 @@
 class Noeud:
-    def __init__(self, nom, voisins, id):
+    def __init__(self, nom, voisins, id, coords):
         self.nom = nom
         self.voisins = voisins
         self.id = id
+        self.coords = coords
 
     def __str__(self):
         return self.nom
