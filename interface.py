@@ -1,5 +1,6 @@
 import tkinter as tk
 import pickle
+import math
 from tkinter import Scrollbar
 from tkinter.filedialog import asksaveasfile, askopenfile
 from graphe import Noeud, Graphe
@@ -16,8 +17,8 @@ class MainApplication(tk.Frame):
         self.debut_x, self.debut_y = None, None
         self.ligne = None
         self.current = None
-        self.retour_liste = []
         self.noeud1, self.noeud2 = None, None
+        self.pile_retour = []
 
     def create_widgets(self):
         # Création d'un Canvas
@@ -66,16 +67,12 @@ class MainApplication(tk.Frame):
         self.root.bind("<Control-z>", self.retour_arriere)
 
     def sauver_points(self):
-        files = [('Text Document', '*.pkl')]
-        file = asksaveasfile(
-            filetypes=files, defaultextension=files, mode="wb")
+        file = asksaveasfile(defaultextension='.pkl', mode="wb")
         if file:
             pickle.dump(self.liste_noeuds, file)
 
     def charger_points(self):
-        files = [('Text Document', '*.pkl')]
-        file = askopenfile(
-            filetypes=files, defaultextension=files, mode="rb")
+        file = askopenfile(defaultextension='.pkl', mode="rb")
         if file:
             self.liste_noeuds = pickle.load(file)
             print(self.liste_noeuds)
@@ -85,17 +82,22 @@ class MainApplication(tk.Frame):
     def afficher_points(self):
         """
         """
+        self.canvas.delete("noeud")
         for noeud in self.liste_noeuds:
             (x, y) = noeud.coords
             noeud_canvas = self.canvas.create_oval(
                 x-self.taille, y-self.taille, x+self.taille, y+self.taille, fill="red", tags='noeud')
 
-    def retour_arriere(self, event):
+    def retour_arriere(self):
         """
+
         """
-        print("ctrl")
-        if self.retour_liste:
-            self.canvas.delete(self.retour_liste.pop())
+        print("ctrl-z")
+        if self.pile_retour:
+            dernier_noeud = self.pile_retour.pop()
+            self.canvas.delete(dernier_noeud.id)
+            del self.liste_noeuds[-1]
+            print(self.liste_noeuds)
 
     def trouver_nom_noeud(self, id):
         """
@@ -142,16 +144,28 @@ class MainApplication(tk.Frame):
 
             self.retour_liste.append(self.ligne)
 
+            self.calcul_distance()
+
+            print(nom.id)
         except:
             pass
+
+    def calcul_distance(self):
+
+        x1, y1 = self.noeud1.coords
+        x2, y2 = self.noeud2.coords
+        print(x1, x2, y1, y2)
+        distance = math.sqrt((x2-x1)**2 + (y2-y1)**2)
+        print(distance)
+        return distance
+
+    def calcul_poids(self):
+        pass
 
     def ajouter_arete(self, event):
         pass
 
     def ajouter_noeud(self, event):
-        # Ajoute un point d'intersection à la liste
-        # self.liste_noeuds.append(
-        #     (self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)))
 
         # Dessine un petit cercle pour représenter le point d'intersection
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
@@ -162,8 +176,13 @@ class MainApplication(tk.Frame):
         noeud_canvas_id = self.canvas.find_withtag(noeud_canvas)[0]
 
         # Ajoute a liste_noeuds le nouveau point
-        self.liste_noeuds.append(
-            Noeud(nom=chr(63+noeud_canvas_id), voisins={}, id=noeud_canvas_id, coords=(x, y)))
+        noeud = Noeud(nom=chr(63+noeud_canvas_id), voisins={},
+                      id=noeud_canvas_id, coords=(x, y))
+
+        self.liste_noeuds.append(noeud)
+
+        self.pile_retour.append(noeud)
+
         print(f'noeud_canvas_id: {noeud_canvas_id}')
         print(self.liste_noeuds)
 
