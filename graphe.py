@@ -105,7 +105,7 @@ def dijkstra(graphe, depart, arrivee, niveau_skieur):
                     cout_chemin = noeud.cout + poids_voisin*5
                 elif couleur == "noir":
                     cout_chemin = noeud.cout + poids_voisin*8
-                elif couleur == "téléphérique":
+                elif couleur == "télécabine":
                     cout_chemin = noeud.cout + poids_voisin*3
                 elif couleur == "téléski":
                     cout_chemin = noeud.cout + poids_voisin*4
@@ -126,7 +126,7 @@ def dijkstra(graphe, depart, arrivee, niveau_skieur):
                     cout_chemin = noeud.cout + poids_voisin*2
                 elif couleur == "noir":
                     cout_chemin = noeud.cout + poids_voisin*3
-                elif couleur == "téléphérique":
+                elif couleur == "télécabine":
                     cout_chemin = noeud.cout + poids_voisin*3
                 elif couleur == "téléski":
                     cout_chemin = noeud.cout + poids_voisin*4
