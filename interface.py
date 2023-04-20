@@ -19,6 +19,7 @@ class MainApplication(tk.Frame):
         self.current = None
         self.noeud1, self.noeud2 = None, None
         self.pile_retour = []
+        self.graphe = None
 
     def create_widgets(self):
         # Création d'un Canvas
@@ -33,8 +34,17 @@ class MainApplication(tk.Frame):
             root, text="Sauvegarder Points", command=self.sauver_points)
         self.b_charger = tk.Button(
             root, text="Charger Points", command=self.charger_points)
+        self.b_creer_graphe = tk.Button(
+            root, text="Creer le graphe", command=self.creer_graphe)
+        self.b_sauver_graphe = tk.Button(
+            root, text="Sauvegarder Graphe", command=self.sauver_graphe)
+        self.b_charger_graphe = tk.Button(
+            root, text="Sauvegarder Graphe", command=self.charger_graphe)
         self.b_sauvegarder.pack()
         self.b_charger.pack()
+        self.b_sauver_graphe.pack()
+        self.b_charger_graphe.pack()
+        self.b_creer_graphe.pack()
 
         # Creation scrollbar x
 
@@ -71,10 +81,23 @@ class MainApplication(tk.Frame):
         if file:
             pickle.dump(self.liste_noeuds, file)
 
+    def sauver_graphe(self):
+        file = asksaveasfile(defaultextension='.pkl', mode="wb")
+        if file:
+            pickle.dump(self.graphe, file)
+
     def charger_points(self):
         file = askopenfile(defaultextension='.pkl', mode="rb")
         if file:
             self.liste_noeuds = pickle.load(file)
+            print(self.liste_noeuds)
+            print(self.liste_noeuds[0].id)
+            self.afficher_points()
+
+    def charger_graphe(self):
+        file = askopenfile(defaultextension='.pkl', mode="rb")
+        if file:
+            self.graphe = pickle.load(file)
             print(self.liste_noeuds)
             print(self.liste_noeuds[0].id)
             self.afficher_points()
@@ -88,9 +111,15 @@ class MainApplication(tk.Frame):
             noeud_canvas = self.canvas.create_oval(
                 x-self.taille, y-self.taille, x+self.taille, y+self.taille, fill="red", tags='noeud')
 
-    def retour_arriere(self):
+    def creer_graphe(self):
         """
+        """
+        self.graphe = Graphe(self.liste_noeuds)
+        print("graphe cree")
+        print(self.graphe)
 
+    def retour_arriere(self, event):
+        """
         """
         print("ctrl-z")
         if self.pile_retour:
@@ -134,21 +163,24 @@ class MainApplication(tk.Frame):
 
         nom, coords = self.trouver_noeud_proche(event)
 
-        try:
+        self.noeud2 = nom
+        self.ligne = self.canvas.create_line(
+            self.debut_x+self.taille, self.debut_y+self.taille, coords[2]-self.taille, coords[3]-self.taille)
 
-            self.noeud2 = nom
-            self.ligne = self.canvas.create_line(
-                self.debut_x+self.taille, self.debut_y+self.taille, coords[2]-self.taille, coords[3]-self.taille)
+        self.canvas.itemconfig(self.ligne, width=3)
 
-            self.canvas.itemconfig(self.ligne, width=3)
+        self.calcul_distance()
 
-            self.retour_liste.append(self.ligne)
+        print(nom.id)
+        print('test')
 
-            self.calcul_distance()
+        print(self.graphe)
+        self.graphe.ajouter_arete(
+            self.noeud1, self.noeud2, poids_d=1, poids_e=1, couleur="vert")
 
-            print(nom.id)
-        except:
-            pass
+        print('sex')
+
+        print(self.graphe.noeuds[0].voisins)
 
     def calcul_distance(self):
 
@@ -176,8 +208,8 @@ class MainApplication(tk.Frame):
         noeud_canvas_id = self.canvas.find_withtag(noeud_canvas)[0]
 
         # Ajoute a liste_noeuds le nouveau point
-        noeud = Noeud(nom=chr(63+noeud_canvas_id), voisins={},
-                      id=noeud_canvas_id, coords=(x, y))
+        noeud = Noeud(nom=f"Noeud{noeud_canvas_id}",
+                      voisins={}, id=noeud_canvas_id, coords=(x, y))
 
         self.liste_noeuds.append(noeud)
 

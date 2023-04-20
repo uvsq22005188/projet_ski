@@ -26,7 +26,8 @@ class Graphe:
         self.noeuds.append(noeud)
 
     def ajouter_arete(self, noeud1, noeud2, poids_d, poids_e, couleur):
-        self.noeuds[noeud1.id].voisins[noeud2] = (poids_d, poids_e, couleur)
+        self.noeuds[self.noeuds.index(noeud1)].voisins[noeud2] = (
+            poids_d, poids_e, couleur)
 
     def supprimer_noeud(self, noeud):
         self.noeuds.remove(noeud)
