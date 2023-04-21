@@ -1,9 +1,10 @@
 class Noeud:
-    def __init__(self, nom, voisins, id, coords):
+    def __init__(self, nom, voisins, id, coords, station):
         self.nom = nom
         self.voisins = voisins
         self.id = id
         self.coords = coords
+        self.station = station
 
     def __str__(self):
         return self.nom
@@ -44,7 +45,8 @@ class Graphe:
         return self.noeuds
 
     def get_voisins(self, noeud):
-        return self.noeuds[noeud.id].voisins
+        return self.noeuds[self.noeuds.index(noeud)].voisins
+        # return self.noeuds[noeud.id].voisins
 
     def get_couleur(self, noeud):
         return self.noeuds[noeud.id].couleur
