@@ -29,10 +29,23 @@ class MainApplication(tk.Frame):
         self.depart, self.arrivee = None, None
 
     def couleur_piste(self):
+        """
+        Retourne la couleur du bouton qui est presse
+        """
         return self.v.get()
+
+    def choix_point(self):
+        """
+        Definit la couleur du point selon le bouton qui est presse
+        """
+        if self.v.get() == "intersection":
+            self.couleur_point = "green"
+        else:
+            self.couleur_point = "red"
 
     def choix_niveau_skieur(self):
         """
+        Definit le niveau du skieur selon le bouton qui est presse
         """
         if self.v_niveau.get() == "0":
             self.utilisateur_experimente = True
@@ -41,6 +54,7 @@ class MainApplication(tk.Frame):
 
     def delete_graph_widgets(self):
         """
+        supprime de l'ecran tout les widget en rapport avec la creation du graphe et unbind les touches
         """
         self.b_vert.forget()
         self.b_bleu.forget()
@@ -55,16 +69,11 @@ class MainApplication(tk.Frame):
         self.canvas.unbind("<ButtonRelease-3>")
         self.root.unbind("<Control-z>")
 
-    def choix_point(self):
-        """
-        """
-        if self.v.get() == "intersection":
-            self.couleur_point = "green"
-        else:
-            self.couleur_point = "red"
-
     def create_graph_widgets(self):
+        """
+        Creer et ajoute a l'ecran tout les widget en rapport avec la creation du graphe et bind les touches
 
+        """
         self.v = StringVar()
 
         # Dictionary to create multiple buttons
@@ -118,12 +127,14 @@ class MainApplication(tk.Frame):
 
     def delete_skieur_widget(self):
         """
+        supprime de l'ecran tout les widget en rapport avec le skieur
         """
         self.b_skieur_debutant.forget()
         self.b_skieur_experimente.forget()
 
     def create_skieur_widget(self):
         """
+        Creer et ajoute a l'ecran tout les widget en rapport avec le skieur
         """
 
         self.v_niveau = StringVar()
@@ -138,11 +149,19 @@ class MainApplication(tk.Frame):
         self.b_skieur_debutant.pack(fill="x", ipady=5)
 
     def create_widgets(self):
+        """
+        Creation des widgets de base
+        """
         # Création d'un Canvas
-        self.width = 1920
-        self.height = 900
+        self.width = 2440
+        self.height = 1440
         self.canvas = tk.Canvas(
             self, width=self.width, height=self.height, scrollregion=(0, 0, 3600, 3000))
+
+        self.canvas.bind('<Control-MouseWheel>',
+                         lambda event: self.canvas.xview_scroll(-int(event.delta/120), 'units'))
+        self.canvas.bind(
+            '<MouseWheel>', lambda event: self.canvas.yview_scroll(-int(event.delta/120), 'units'))
 
         # Creation scrollbar x
 
@@ -223,28 +242,34 @@ class MainApplication(tk.Frame):
         self.canvas.create_image(
             1800, 1500, image=self.background_img, anchor="center")
 
-        # Ajout d'une variable pour stocker les points d'intersection
+        # Ajout d'une variable pour stocker les noeuds
         self.liste_noeuds = []
 
     def recherche_chemin(self):
+        """
+        recupere le chemin avec la fonction dijkstra et l'affiche a ecran
+        """
         self.chemin = dijkstra(
             self.graphe, self.depart, self.fin, "debutant")
         self.afficher_chemin()
 
     def choix_depart(self):
         """
+        bind clique gauche pour cliquer sur le point de depart
         """
         self.canvas.bind(
             "<Button-1>", self._choix_depart)
 
     def choix_fin(self):
         """
+        bind clique gauche pour cliquer sur le point d'arrive
         """
         self.canvas.bind(
             "<Button-1>", self._choix_fin)
 
     def _choix_depart(self, event):
         """
+        trouve le neoud le plus proche du clique et unbind la touche
         """
         self.depart = self.trouver_noeud_proche(event)[0]
         self.canvas.unbind("<Button-1>")
@@ -253,6 +278,7 @@ class MainApplication(tk.Frame):
 
     def _choix_fin(self, event):
         """
+        trouve le neoud le plus proche du clique et unbind la touche
         """
         self.fin = self.trouver_noeud_proche(event)[0]
         self.canvas.unbind("<Button-1>")
@@ -260,59 +286,80 @@ class MainApplication(tk.Frame):
         print(self.fin)
 
     def sauver_points(self):
+        """
+        Sauvegarde avec Pickle la liste des noeuds
+        """
         file = asksaveasfile(defaultextension='.pkl', mode="wb")
         if file:
             pickle.dump(self.liste_noeuds, file)
 
     def sauver_graphe(self):
+        """
+        Sauvegarde avec Pickle le graphe
+        """
         file = asksaveasfile(defaultextension='.pkl', mode="wb")
         if file:
             pickle.dump(self.graphe, file)
 
     def charger_points(self):
+        """
+        Charge avec Pickle la liste des noeuds
+        """
         file = askopenfile(defaultextension='.pkl', mode="rb")
         if file:
             self.liste_noeuds = pickle.load(file)
             self.afficher_points()
 
     def charger_graphe(self):
+        """
+        Charge avec Pickle le graphe
+        """
         file = askopenfile(defaultextension='.pkl', mode="rb")
         if file:
             self.graphe = pickle.load(file)
             self.liste_noeuds = self.graphe.noeuds
+
+            # recupere le nombre de noeud pour remettre a jour le compteur de noeud
             self.compteur_noeud = len(self.liste_noeuds)
+
             self.afficher_graphe()
 
     def afficher_points(self):
         """
+        Parcours la liste des noeuds, recupere leur coordonnes et affiche les noeuds a l'ecran
         """
         self.canvas.delete("noeud")
         for noeud in self.liste_noeuds:
             self.tag = noeud.id
             print(self.tag)
             (x, y) = noeud.coords
+
+            nouveau_noeud = self.canvas.create_oval(
+                x-self.taille, y-self.taille, x+self.taille, y+self.taille, fill="red", tags=self.tag)
+
             if noeud.station:
-                self.canvas.create_oval(
-                    x-self.taille, y-self.taille, x+self.taille, y+self.taille, fill="red", tags=self.tag)
+                self.canvas.itemconfig(nouveau_noeud, fill="red")
+
             else:
-                self.canvas.create_oval(
-                    x-self.taille, y-self.taille, x+self.taille, y+self.taille, fill="green", tags=self.tag)
+                self.canvas.itemconfig(nouveau_noeud, fill="green")
 
     def afficher_arretes(self):
         """
+        Parcours la liste des noeuds, recupere les voisins et trace les arretes a l'ecran
         """
         for noeud in self.graphe.noeuds:
             x, y = noeud.coords
             dict_voisins = noeud.voisins.items()
-            # print(dict_voisins)
             for noeud_tuple in dict_voisins:
+                # instance du noeud (cle du dictionnaire)
                 x1, y1 = noeud_tuple[0].coords
-                color = noeud_tuple[1][-1]
+                # derniere valeur du tuple (valeur du dictionnaire)
+                couleur = noeud_tuple[1][-1]
 
                 ligne = self.canvas.create_line(
                     x, y, x1, y1)
-                if color in self.liste_couleur:
-                    self.canvas.itemconfig(ligne, width=5, fill=color)
+                if couleur in self.liste_couleur:
+                    self.canvas.itemconfig(ligne, width=5, fill=couleur)
 
                 else:
                     self.canvas.itemconfig(
@@ -320,6 +367,7 @@ class MainApplication(tk.Frame):
 
     def afficher_graphe(self):
         """
+        Affiche le graphe
         """
         self.canvas.delete("neoud")
         self.afficher_points()
@@ -327,11 +375,13 @@ class MainApplication(tk.Frame):
 
     def creer_graphe(self):
         """
+        Creer instance de l'objet graphe avec tout les points
         """
         self.graphe = Graphe(self.liste_noeuds)
 
     def retour_arriere(self, event):
         """
+        Efface le dernier noeud creer
         """
         if self.pile_retour:
             dernier_noeud = self.pile_retour.pop()
@@ -340,13 +390,17 @@ class MainApplication(tk.Frame):
 
     def trouver_nom_noeud(self, id_noeud):
         """
+        compare l'id du noeud a tout les noeud pour trouver le nom du noeud
         """
-        for key, value in enumerate(self.liste_noeuds):
+        for _, value in enumerate(self.liste_noeuds):
             print(value.id)
             if value.id == id_noeud:
                 return value
 
     def trouver_noeud_proche(self, event):
+        """
+        trouve le noeud le plus proche par rapport au clique souris
+        """
 
         self.current = self.canvas.find_closest(
             self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
@@ -361,6 +415,9 @@ class MainApplication(tk.Frame):
             return nom, coords
 
     def debut_ligne(self, event):
+        """
+        recupere les coordonnes et le nom du noeud
+        """
 
         nom, coords = self.trouver_noeud_proche(event)
         try:
@@ -371,6 +428,9 @@ class MainApplication(tk.Frame):
             print("Pas de noeud")
 
     def tracer_ligne(self, event):
+        """
+        recupere les coordonnes et le nom du 2eme noeud pour tracer une arrete entre les deux noeuds
+        """
 
         nom, coords = self.trouver_noeud_proche(event)
 
@@ -386,12 +446,15 @@ class MainApplication(tk.Frame):
             self.canvas.itemconfig(self.ligne, width=8,
                                    fill="black", dash=(5, 1))
 
-        self.poids = self.calcul_distance()
+        self.poids = self._calcul_distance()
 
         self.graphe.ajouter_arete(
             self.noeud1, self.noeud2, poids_d=self.poids, poids_e=self.poids, couleur=self.couleur)
 
-    def calcul_distance(self):
+    def _calcul_distance(self):
+        """
+        Calcul la distance entre les deux noeuds
+        """
 
         x1, y1 = self.noeud1.coords
         x2, y2 = self.noeud2.coords
@@ -399,6 +462,9 @@ class MainApplication(tk.Frame):
         return int(distance)
 
     def ajouter_noeud(self, event):
+        """
+        ajoute nouveau noeud a la liste des noeuds et l'affiche a l'ecran
+        """
 
         self.tag = ("n-%d" % self.compteur_noeud, "noeud")
 
@@ -424,6 +490,7 @@ class MainApplication(tk.Frame):
 
     def afficher_arrete_chemin(self):
         """
+        surligne le chemin trouve
         """
         x1, y1 = self.noeud1.coords
         x2, y2 = self.noeud2.coords
@@ -431,10 +498,9 @@ class MainApplication(tk.Frame):
         self.canvas.itemconfig(test, width=20,
                                fill="black", dash=(5, 1))
 
-        print(x1, y1, x2, y2)
-
     def blinking_on(self):
         """
+        fait clignoter le chemin
         """
         self.liste_arretes_chemin = self.canvas.find_withtag("chemin")
 
@@ -445,6 +511,7 @@ class MainApplication(tk.Frame):
 
     def blinking_off(self):
         """
+        fait clignoter le chemin
         """
         for arrete in self.liste_arretes_chemin:
             self.canvas.itemconfig(arrete, width=20)
@@ -453,6 +520,7 @@ class MainApplication(tk.Frame):
 
     def afficher_chemin(self):
         """
+        affiche a l'ecran le chemin trouvé
         """
         print(self.chemin)
         self.distance = self.chemin[-1]
