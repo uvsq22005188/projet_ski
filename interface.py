@@ -154,7 +154,7 @@ class MainApplication(tk.Frame):
         """
         # Création d'un Canvas
         self.width = 2440
-        self.height = 1440
+        self.height = 800
         self.canvas = tk.Canvas(
             self, width=self.width, height=self.height, scrollregion=(0, 0, 3600, 3000))
 

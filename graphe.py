@@ -1,5 +1,6 @@
 import time
 
+
 class Noeud:
     def __init__(self, nom, voisins, id, coords, station):
         self.nom = nom
@@ -102,15 +103,19 @@ def dijkstra(graphe, depart, arrivee, niveau_skieur):
         if niveau_skieur == "debutant":
             for voisin, (poids_voisin, _, couleur) in graphe.get_voisins(noeud).items():
                 # On calcule le cout du chemin
-                cout_chemin = plus_court_chemin(noeud, poids_voisin, couleur, "d")
+                cout_chemin = plus_court_chemin(
+                    noeud, poids_voisin, couleur, "d")
                 # On regarde si le chemin est plus court
-                verif_plus_court_chemin(noeud, voisin, cout_chemin, arrivee, "dijkstra")
+                verif_plus_court_chemin(
+                    noeud, voisin, cout_chemin, arrivee, "dijkstra")
         elif niveau_skieur == "expert":
             for voisin, (_, poids_voisin, couleur) in graphe.get_voisins(noeud).items():
                 # On calcule le cout du chemin
-                cout_chemin = plus_court_chemin(noeud, poids_voisin, couleur, "d")
+                cout_chemin = plus_court_chemin(
+                    noeud, poids_voisin, couleur, "d")
                 # On regarde si le chemin est plus court
-                verif_plus_court_chemin(noeud, voisin, cout_chemin, arrivee, "dijkstra")
+                verif_plus_court_chemin(
+                    noeud, voisin, cout_chemin, arrivee, "dijkstra")
 
     # On reconstruit le chemin
     chemin = reconstruction_chemin(arrivee)
@@ -118,6 +123,7 @@ def dijkstra(graphe, depart, arrivee, niveau_skieur):
     print(chemin, '---------------')
     print("Temps d'execution : {} secondes".format(time.time() - t))
     return chemin, arrivee.cout
+
 
 def astar(graphe, depart, arrivee, niveau_skieur):
     t = time.time()
@@ -136,15 +142,19 @@ def astar(graphe, depart, arrivee, niveau_skieur):
         if niveau_skieur == "debutant":
             for voisin, (poids_voisin, _, couleur) in graphe.get_voisins(noeud).items():
                 # On calcule le cout du chemin
-                cout_chemin = plus_court_chemin(noeud, poids_voisin, couleur, "d")
+                cout_chemin = plus_court_chemin(
+                    noeud, poids_voisin, couleur, "d")
                 # On regarde si le chemin est plus court
-                verif_plus_court_chemin(noeud, voisin, cout_chemin, arrivee, "astar")
+                verif_plus_court_chemin(
+                    noeud, voisin, cout_chemin, arrivee, "astar")
         elif niveau_skieur == "expert":
             for voisin, (_, poids_voisin, couleur) in graphe.get_voisins(noeud).items():
                 # On calcule le cout du chemin
-                cout_chemin = plus_court_chemin(graphe, noeud, voisin, poids_voisin, couleur, "e")
+                cout_chemin = plus_court_chemin(
+                    graphe, noeud, voisin, poids_voisin, couleur, "e")
                 # On regarde si le chemin est plus court
-                verif_plus_court_chemin(noeud, voisin, cout_chemin, arrivee, "astar")
+                verif_plus_court_chemin(
+                    noeud, voisin, cout_chemin, arrivee, "astar")
 
     # On reconstruit le chemin
     chemin = reconstruction_chemin(arrivee)
@@ -163,6 +173,7 @@ def initialisation(noeuds, depart, algo):
     depart.cout = 0
     if algo == "astar":
         depart.cout_estime = 0
+
 
 def plus_court_chemin(noeud, poids_voisin, couleur, niveau_skieur):
     if niveau_skieur == "d":
@@ -203,7 +214,9 @@ def verif_plus_court_chemin(noeud, voisin, cout_chemin, arrivee, algo):
         voisin.cout = cout_chemin
         voisin.precedent = noeud
         if algo == "astar":
-            voisin.cout_estime = cout_chemin + abs(voisin.coords[0] - arrivee.coords[0]) + abs(voisin.coords[1] - arrivee.coords[1])
+            voisin.cout_estime = cout_chemin + \
+                abs(voisin.coords[0] - arrivee.coords[0]) + \
+                abs(voisin.coords[1] - arrivee.coords[1])
 
 
 def reconstruction_chemin(arrivee):

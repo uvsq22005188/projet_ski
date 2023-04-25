@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter.filedialog import asksaveasfile, askopenfile
 import sys
-import graphe
 import pickle
 import math
+import graphe
 
 
 class App(tk.Tk):
@@ -27,12 +27,14 @@ class App(tk.Tk):
 
         self.graphe = graphe.Graphe(noeuds=[])
 
+        self.chemin = None
+
         # Frame
 
         self.frame_canvas = FrameCanvas(self)
         self.dessin = Dessin(self, self.frame_canvas)
         self.frame_graphe = FrameGraphe(self, self.frame_canvas, self.dessin)
-        self.frame_skieur = FrameSkieur(self, self.frame_canvas)
+        self.frame_skieur = FrameSkieur(self, self.frame_canvas, self.dessin)
         self.fichier = Fichier(self, self.dessin)
 
         # Menu
@@ -52,6 +54,7 @@ class Dessin():
         self.parent = parent
         self.frame_canvas = frame_canvas
         self.canvas = self.frame_canvas.canvas
+        self.pile = []
         self.taille = 15
         self.liste_couleur = ["green", "blue", "red", "black"]
         self.noeud1, self.noeud2 = None, None
@@ -77,11 +80,11 @@ class Dessin():
 
         for noeud in liste_noeuds:
             tag = noeud.id
-            (x, y) = noeud.coords
+            (noeud_x, noeud_y) = noeud.coords
 
             nouveau_noeud = self.canvas.create_oval(
-                x-self.taille, y-self.taille,
-                x+self.taille, y+self.taille,
+                noeud_x-self.taille, noeud_y-self.taille,
+                noeud_x+self.taille, noeud_y+self.taille,
                 fill="red", tags=tag, activefill="black")
 
             if noeud.station:
@@ -90,8 +93,6 @@ class Dessin():
             else:
                 self.canvas.itemconfig(nouveau_noeud, fill="green")
 
-            print(noeud)
-
     def afficher_aretes(self):
         """
         Parcours la liste des noeuds, recupere les voisins et trace
@@ -99,16 +100,16 @@ class Dessin():
         """
         liste_noeuds = self.get_noeuds()
         for noeud in liste_noeuds:
-            x, y = noeud.coords
+            noeud_x, noeud_y = noeud.coords
             dict_voisins = noeud.voisins.items()
             for noeud_tuple in dict_voisins:
                 # instance du noeud (cle du dictionnaire)
-                x1, y1 = noeud_tuple[0].coords
+                noeud_x1, noeud_y1 = noeud_tuple[0].coords
                 # derniere valeur du tuple (valeur du dictionnaire)
                 couleur = noeud_tuple[1][-1]
 
                 ligne = self.canvas.create_line(
-                    x, y, x1, y1)
+                    noeud_x, noeud_y, noeud_x1, noeud_y1)
                 if couleur in self.liste_couleur:
                     self.canvas.itemconfig(ligne, width=5, fill=couleur)
 
@@ -116,34 +117,40 @@ class Dessin():
                     self.canvas.itemconfig(
                         ligne, width=8, fill="black", dash=(5, 1))
 
-    def ajouter_noeud(self, event):  # FIXME
+    def ajouter_noeud(self, event):
         """
         ajoute nouveau noeud a la liste des noeuds et l'affiche a l'ecran
         """
         nombre_de_noeuds = len(self.get_noeuds())
-        tag = ("n-%d" % nombre_de_noeuds, "noeud")
 
+        tag = (f'n-{nombre_de_noeuds}')
+        print(tag)
         var_point = self.parent.var_point.get()
 
         # Dessine un petit cercle pour représenter le point d'intersection
-        x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+        coords_x, coords_y = self.canvas.canvasx(
+            event.x), self.canvas.canvasy(event.y)
         point = self.canvas.create_oval(
-            x-self.taille, y-self.taille, x+self.taille, y+self.taille, fill='red', tags=tag, activefill="black")
+            coords_x-self.taille, coords_y-self.taille, coords_x +
+            self.taille, coords_y+self.taille,
+            fill='red', tags=tag, activefill="black")
 
         if var_point == 'station':
             self.canvas.itemconfig(point, fill="red")
             noeud = graphe.Noeud(nom=f"Noeud{nombre_de_noeuds}",
-                                 voisins={}, id=tag[0], coords=(x, y),
+                                 voisins={}, id=tag,
+                                 coords=(coords_x, coords_y),
                                  station=True)
         else:
             self.canvas.itemconfig(point, fill="green")
             noeud = graphe.Noeud(nom=f"Noeud{nombre_de_noeuds}",
-                                 voisins={}, id=tag[0], coords=(x, y),
+                                 voisins={}, id=tag,
+                                 coords=(coords_x, coords_y),
                                  station=False)
 
         self.parent.graphe.ajouter_noeud(noeud)
 
-        # self.pile_retour.append(noeud) #FIXME
+        self.pile.append(noeud)
 
     def debut_arete(self, event):
         self.noeud1 = self.frame_canvas.trouver_noeud_proche(event)
@@ -154,11 +161,11 @@ class Dessin():
             self.tracer_arete()
 
     def tracer_arete(self):
-        x1, y1 = self.noeud1.coords
-        x2, y2 = self.noeud2.coords
+        noeud_x1, noeud_y1 = self.noeud1.coords
+        noeud_x2, noeud_y2 = self.noeud2.coords
 
         arete = self.canvas.create_line(
-            x1, y1, x2, y2)
+            noeud_x1, noeud_y1, noeud_x2, noeud_y2)
 
         self.modifier_arete(arete)
 
@@ -171,6 +178,15 @@ class Dessin():
                                    fill="black", dash=(5, 1))
 
         self.ajouter_arete(couleur)
+        self.pile.append(arete)
+
+    def retour_arriere(self, event):
+        element = self.pile.pop()
+        if isinstance(element, graphe.Noeud):
+            self.canvas.delete(element.id)
+            self.parent.graphe.supprimer_noeud(element)
+        else:
+            self.canvas.delete(element)
 
     def ajouter_arete(self, couleur):
         """
@@ -187,7 +203,61 @@ class Dessin():
         """
         noeud1_x, noeud1_y = noeud1.coords
         noeud2_x, noeud2_y = noeud2.coords
-        return math.sqrt((noeud1_x - noeud2_x) ** 2 + (noeud1_y - noeud2_y) ** 2)
+        return math.sqrt((noeud1_x - noeud2_x) ** 2 +
+                         (noeud1_y - noeud2_y) ** 2)
+
+    def afficher_chemin(self):
+        self.parent.blinking = True
+        chemin = self.parent.chemin
+        parcours = chemin[0]
+        liste_noeuds_affiche = []
+        liste_noeuds_affiche.append(parcours[0])
+        for noeud in parcours:
+            voisins = noeud.voisins
+            self.noeud1 = noeud
+
+            for noeud_voisin in voisins:
+                if noeud_voisin in parcours and noeud_voisin \
+                        not in liste_noeuds_affiche:
+
+                    liste_noeuds_affiche.append(noeud_voisin)
+                    print(liste_noeuds_affiche)
+                    self.noeud2 = noeud_voisin
+                    self.afficher_arrete_chemin()
+        self.blinking_on()
+
+    def afficher_arrete_chemin(self):
+        """
+        surligne le chemin trouve
+        """
+        noeud_x1, noeud_y1 = self.noeud1.coords
+        noeud_x2, noeud_y2 = self.noeud2.coords
+        test = self.canvas.create_line(
+            noeud_x1, noeud_y1, noeud_x2, noeud_y2, tag="chemin")
+        self.canvas.itemconfig(test, width=20,
+                               fill="black", dash=(5, 1))
+
+    def blinking_on(self):
+        """
+        fait clignoter le chemin
+        """
+        liste_aretes_chemin = self.canvas.find_withtag("chemin")
+
+        for arete in liste_aretes_chemin:
+            self.canvas.itemconfig(arete, width=0)
+        if self.parent.blinking:
+            self.parent.after(500, self.blinking_off)
+
+    def blinking_off(self):
+        """
+        fait clignoter le chemin
+        """
+        liste_aretes_chemin = self.canvas.find_withtag("chemin")
+
+        for arete in liste_aretes_chemin:
+            self.canvas.itemconfig(arete, width=20)
+        if self.parent.blinking:
+            self.parent.after(400, self.blinking_on)
 
 
 class Fichier():
@@ -202,6 +272,7 @@ class Fichier():
         file = askopenfile(defaultextension='.pkl', mode="rb")
         if file:
             self.parent.graphe = pickle.load(file)
+
             self.dessin.afficher_graphe()
 
     def sauvegarder_graphe(self):
@@ -213,7 +284,8 @@ class Fichier():
 
 
 class MenuBar(tk.Menu):
-    def __init__(self, parent, frame_graphe, frame_canvas, frame_skieur, fichier):
+    def __init__(self, parent, frame_graphe, frame_canvas, frame_skieur,
+                 fichier):
         super().__init__(parent)
         self.parent = parent
         self.frame_graphe = frame_graphe
@@ -223,41 +295,37 @@ class MenuBar(tk.Menu):
 
         # File Menu
 
-        fileMenu = tk.Menu(self, tearoff=0)
-        self.add_cascade(label="File", underline=0, menu=fileMenu)
-        fileMenu.add_command(label="Sauvegarder Graphe",
-                             underline=1,
-                             command=self.fichier.sauvegarder_graphe)
-        fileMenu.add_command(label="Charger Graphe",
-                             underline=1,
-                             command=self.fichier.charger_graphe)
-        fileMenu.add_command(label="Exit",
-                             underline=1, command=self.quit)
+        file_menu = tk.Menu(self, tearoff=0)
+        self.add_cascade(label="File", underline=0, menu=file_menu)
+        file_menu.add_command(label="Sauvegarder Graphe",
+                              underline=1,
+                              command=self.fichier.sauvegarder_graphe)
+        file_menu.add_command(label="Charger Graphe",
+                              underline=1,
+                              command=self.fichier.charger_graphe)
+        file_menu.add_command(label="Exit",
+                              underline=1, command=self.quit)
 
         # Graphe Menu
 
-        grapheMenu = tk.Menu(self, tearoff=0)
-        self.add_cascade(label="Graphe", underline=0, menu=grapheMenu)
-        grapheMenu.add_command(label="Edition Graphe",
-                               underline=1,
-                               command=self.frame_graphe.affichage_frame)
+        graphe_menu = tk.Menu(self, tearoff=0)
+        self.add_cascade(label="Graphe", underline=0, menu=graphe_menu)
+        graphe_menu.add_command(label="Edition Graphe",
+                                underline=1,
+                                command=self.frame_graphe.affichage_frame)
 
         # Skieur Menu
 
-        skieurMenu = tk.Menu(self, tearoff=0)
-        self.add_cascade(label="Skieur", underline=0, menu=skieurMenu)
-        skieurMenu.add_command(label="Edition Skieur",
-                               underline=1,
-                               command=frame_skieur.affichage_frame)
+        skieur_menu = tk.Menu(self, tearoff=0)
+        self.add_cascade(label="Skieur", underline=0, menu=skieur_menu)
+        skieur_menu.add_command(label="Edition Skieur",
+                                underline=1,
+                                command=frame_skieur.affichage_frame)
 
     # Fonctions file
 
     def quit(self):
         sys.exit(0)
-
-    # Fonctions graphe
-
-    # Fonctions skieur
 
 
 class FrameCanvas(tk.Frame):
@@ -265,6 +333,7 @@ class FrameCanvas(tk.Frame):
         super().__init__(parent)
         self.parent = parent
         self.depart, self.arrivee = None, None
+        self.blinking = True
         self.grid(row=0, column=0, sticky='nsew')
         self.parent.grid_columnconfigure(0, weight=1)
         self.parent.grid_rowconfigure(0, weight=10)
@@ -302,14 +371,6 @@ class FrameCanvas(tk.Frame):
         self.canvas.create_image(0, 0,
                                  image=self.bg_image, anchor='nw')
 
-    def infos_chemins(self):
-        pass
-        # label = tk.Label(
-        #     self.canvas, text=f"Point de départ: {self.depart} \
-        #         - Point d'arrivé: {self.arrivee} - Niveau: \
-        #             {self.parent.var_skieur.get()}")
-        # label.pack()
-
     def trouver_nom_noeud(self, id_noeud):
         """
         compare l'id du noeud a tout les noeud pour trouver le nom du noeud
@@ -320,21 +381,22 @@ class FrameCanvas(tk.Frame):
             if value.id == id_noeud:
                 return value
 
-    def trouver_noeud_proche(self, event):  # TODO
+    def trouver_noeud_proche(self, event):
         """
         trouve le noeud le plus proche par rapport au clique souris
         """
-        self.current = self.canvas.find_closest(
+        current = self.canvas.find_closest(
             self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
 
-        tag = self.canvas.gettags(self.current)[0]
+        tag = self.canvas.gettags(current)[0]
 
         noeud = self.trouver_nom_noeud(id_noeud=tag)
 
-        if 'n-' in tag:
-            return noeud
+        return noeud
 
     def choix_depart_arrivee(self):
+        self.canvas.delete('chemin')
+        self.blinking = False
         self.canvas.bind("<Button-1>", self._choix_depart)
 
     def _choix_depart(self, event):
@@ -349,17 +411,20 @@ class FrameCanvas(tk.Frame):
         """
         self.arrivee = self.trouver_noeud_proche(event)
         self.canvas.unbind("<Button-1>")
-        self.infos_chemins()
+        self.recherche_chemin()
 
     def recherche_chemin(self):
         """
         """
-        chemin = graphe.dijkstra(
-            self.parent.graphe, self.depart, self.arrivee, "debutant")
-        print(chemin)
-
-    def afficher_chemin(self):
-        chemin = self.recherche_chemin()
+        niveau_skieur = self.parent.var_skieur.get()
+        algo = self.parent.var_algorithme.get()
+        print(niveau_skieur, algo)
+        if algo == "dijkstra":
+            self.parent.chemin = graphe.dijkstra(
+                self.parent.graphe, self.depart, self.arrivee, niveau_skieur)
+        else:
+            self.parent.chemin = graphe.astar(
+                self.parent.graphe, self.depart, self.arrivee, niveau_skieur)
 
 
 class FrameGraphe(tk.Frame):
@@ -373,14 +438,7 @@ class FrameGraphe(tk.Frame):
 
         self.compteur = 1
 
-        self.configure(bg='red')
-
-        parent.grid_rowconfigure(1, weight=1)
-
-        for i in range(4):
-            self.rowconfigure(i, weight=1)
-        for i in range(3):
-            self.columnconfigure(i, weight=1)
+        self.parent.grid_rowconfigure(1, weight=1)
 
         self.creation_widget()
         self.placement_widget()
@@ -438,6 +496,12 @@ class FrameGraphe(tk.Frame):
                                              command=self.choix_point)
 
     def placement_widget(self):
+
+        for i in range(4):
+            self.rowconfigure(i, weight=1)
+        for i in range(3):
+            self.columnconfigure(i, weight=1)
+
         self.b_station.grid(row=0, column=0, ipadx=5,
                             ipady=5, sticky='nsew')
         self.b_intersection.grid(
@@ -462,7 +526,7 @@ class FrameGraphe(tk.Frame):
         self.frame_canvas.canvas.bind(
             "<ButtonRelease-3>", self.dessin.fin_arete)
 
-        self.parent.bind("<Control-z>", self.quit)
+        self.parent.bind("<Control-z>", self.dessin.retour_arriere)
 
     def desactiver_bind(self):
 
@@ -490,17 +554,14 @@ class FrameGraphe(tk.Frame):
 
 
 class FrameSkieur(tk.Frame):
-    def __init__(self, parent, frame_canvas):
+    def __init__(self, parent, frame_canvas, dessin):
         super().__init__(parent)
         self.parent = parent
+        self.dessin = dessin
         self.frame_canvas = frame_canvas
         self.compteur = 1
         self.var_niveau = tk.StringVar()
         self.var_algorithme = tk.StringVar()
-        for i in range(2):
-            self.columnconfigure(i, weight=1)
-        for i in range(3):
-            self.rowconfigure(i, weight=1)
 
         self.creation_widget()
         self.placement_widget()
@@ -510,7 +571,7 @@ class FrameSkieur(tk.Frame):
         self.b_skieur_experimente = tk.Radiobutton(self,
                                                    text="Skieur Expérimenté",
                                                    variable=self.var_niveau,
-                                                   value='experimente',
+                                                   value='expert',
                                                    indicator=0,
                                                    command=self.choix_niveau)
         self.b_skieur_debutant = tk.Radiobutton(self,
@@ -523,20 +584,26 @@ class FrameSkieur(tk.Frame):
                                          text="Dijkstra",
                                          variable=self.var_algorithme,
                                          value='dijkstra', indicator=0,
-                                         command=self.choix_niveau)
+                                         command=self.choix_algorithme)
         self.b_astar = tk.Radiobutton(self,
                                       text="A*",
                                       variable=self.var_algorithme,
                                       value='astar', indicator=0,
-                                      command=self.choix_niveau)
+                                      command=self.choix_algorithme)
         self.b_depart = tk.Button(
             self, text="Départ/Arrivée",
             command=self.frame_canvas.choix_depart_arrivee)
-        self.b_arrive = tk.Button(
+        self.b_chemin = tk.Button(
             self, text="Afficher Chemin",
-            command=self.frame_canvas.afficher_chemin)
+            command=self.dessin.afficher_chemin)
 
     def placement_widget(self):
+
+        for i in range(2):
+            self.columnconfigure(i, weight=1)
+        for i in range(3):
+            self.rowconfigure(i, weight=1)
+
         self.b_skieur_debutant.grid(
             row=0, column=0, ipadx=5, ipady=5, sticky='nsew')
         self.b_skieur_experimente.grid(
@@ -547,7 +614,7 @@ class FrameSkieur(tk.Frame):
             row=1, column=1, ipadx=5, ipady=5, sticky='nsew')
         self.b_depart.grid(
             row=2, column=0, ipadx=5, ipady=5, sticky='nsew')
-        self.b_arrive.grid(
+        self.b_chemin.grid(
             row=2, column=1, ipadx=5, ipady=5, sticky='nsew')
 
     def affichage_frame(self):
@@ -565,4 +632,4 @@ class FrameSkieur(tk.Frame):
         self.parent.var_algorithme.set(self.var_algorithme.get())
 
 
-App('Projet Ski', (800, 800))
+App('Projet Ski', (1900, 1200))
