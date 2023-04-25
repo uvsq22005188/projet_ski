@@ -123,8 +123,7 @@ class Dessin():
         """
         nombre_de_noeuds = len(self.get_noeuds())
 
-        tag = (f'n-{nombre_de_noeuds}')
-        print(tag)
+        tag = f'n-{nombre_de_noeuds}'
         var_point = self.parent.var_point.get()
 
         # Dessine un petit cercle pour représenter le point d'intersection
@@ -379,7 +378,8 @@ class FrameCanvas(tk.Frame):
 
         for _, value in enumerate(liste_noeuds):
             if value.id == id_noeud:
-                return value
+                res = value
+        return res
 
     def trouver_noeud_proche(self, event):
         """
