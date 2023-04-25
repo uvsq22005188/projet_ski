@@ -3,6 +3,15 @@ import time
 
 class Noeud:
     def __init__(self, nom, voisins, id, coords, station):
+        """Constructeur de la class Noeud.
+
+        Args:
+            nom (str): nom du noeud
+            voisins (dict): liste des noeud voisins
+            id (int): identifien du noeud
+            coords (tuple): Les coordonnées du noeud
+            station (bool): Variable boolean pour savoir si le noeud est une station
+        """        
         self.nom = nom
         self.voisins = voisins
         self.id = id
@@ -17,6 +26,8 @@ class Noeud:
 
 
 class Graphe:
+    """_summary_
+    """
     def __init__(self, noeuds):
         self.noeuds = noeuds
 
@@ -27,34 +38,96 @@ class Graphe:
         return str(self.noeuds)
 
     def ajouter_noeud(self, noeud):
+        """ajoute un noeud à la liste
+
+        Args:
+            noeud (Node): noeud a ajouter
+        """
         self.noeuds.append(noeud)
 
     def ajouter_arete(self, noeud1, noeud2, poids_d, poids_e, couleur):
+        """Ajoute une arête entre deux noeuds
+
+        Args:
+            noeud1 (Node): Noeud de départ
+            noeud2 (Node): Noeud d'arrivée
+            poids_d (int): Poids du noeud de départ
+            poids_e (int): Poids du noeuds d'arrivé
+            couleur (str): couleur de la piste
+        """
         self.noeuds[self.noeuds.index(noeud1)].voisins[noeud2] = (
             poids_d, poids_e, couleur)
 
     def supprimer_noeud(self, noeud):
+        """Supprime un noeud de la liste
+
+        Args:
+            noeud (Node): Noeud à supprimer 
+        """
         self.noeuds.remove(noeud)
 
     def supprimer_arete(self, noeud1, noeud2):
+        """Supprime une arête de la liste
+
+        Args:
+            noeud1 (Node): Noeud de départ de l'arête 
+            noeud2 (Node): Noeud d'arrivé de la liste
+        """
         del self.noeuds[noeud1.id].voisins[noeud2]
 
     def get_noeud(self, nom):
+        """Retourne un noeud selon son nom 
+
+        Args:
+            nom (str): Nom du noeud 
+
+        Returns:
+            Node: Le noeud correspondant au nom
+        """
         for noeud in self.noeuds:
             if noeud.nom == nom:
                 return noeud
 
     def get_noeuds(self):
+        """Renvoie la liste des noeuds
+
+        Returns:
+            lst: liste des noeuds  
+        """
         return self.noeuds
 
     def get_voisins(self, noeud):
+        """Renvoie un dictionnaire des noeuds voisins à un noeuds spécifique
+
+        Args:
+            noeud (Node): Noeud sélectionné
+
+        Returns:
+            dict: Voisins du noeud sélectionné
+        """
         return self.noeuds[self.noeuds.index(noeud)].voisins
         # return self.noeuds[noeud.id].voisins
 
     def get_couleur(self, noeud):
+        """_summary_
+
+        Args:
+            noeud (Node): Noeud sélectionné
+
+        Returns:
+            str: Renvoie la couleur du noeud
+        """
         return self.noeuds[noeud.id].couleur
 
     def get_noeuds_couleur(self, couleur):
+        """_summary_
+
+        Args:
+            couleur (str): couelur du noeud
+
+        Returns:
+            lst: liste de noeud
+        """
         noeuds = []
         for noeud in self.noeuds:
             if noeud.couleur == couleur:
@@ -63,6 +136,17 @@ class Graphe:
 
 
 def dijkstra(graphe, depart, arrivee, niveau_skieur):
+    """Algorithme permettant de trouver le plus court chemin entre deux noeuds d'un graphe en fonction du niveau du skieur
+
+    Args:
+        graphe (Graphe): Graphe où l'algorithme est appliqué
+        depart (Node): Noeud de départ
+        arrivee (Node): Noeud d'arrivé
+        niveau_skieur (str): Le niveau du skieur
+
+    Returns:
+        lst*int: chemin*cout du chemin
+    """
     t = time.time()
 
     # Initialisation
@@ -142,6 +226,13 @@ def astar(graphe, depart, arrivee, niveau_skieur):
 
 
 def initialisation(noeuds, depart, algo):
+    """Initialisation pour l'algorithme d'astar
+
+    Args:
+        noeuds (node): Noeud actuel
+        depart (Node): Noeud de départ
+        algo (str): algorrithme
+    """
     for noeud in noeuds:
         noeud.cout = float("inf")
         if algo == "astar":
@@ -153,6 +244,17 @@ def initialisation(noeuds, depart, algo):
 
 
 def plus_court_chemin(noeud, poids_voisin, couleur, niveau_skieur):
+    """Permet de choisir le niveau du skieur
+
+    Args:
+        noeud (node): Noeud actuel
+        poids_voisin (int): Poids entre le noeud actuel et son noeud voisin
+        couleur (str): type de piste de ski
+        niveau_skieur (str): Niveau du skieur
+
+    Returns:
+        int: Poids du chemin
+    """
     if niveau_skieur == "d":
         if couleur == "bleu":
             cout_chemin = noeud.cout + poids_voisin*2
@@ -187,6 +289,15 @@ def plus_court_chemin(noeud, poids_voisin, couleur, niveau_skieur):
 
 
 def verif_plus_court_chemin(noeud, voisin, cout_chemin, arrivee, algo):
+    """Vérifie que le chemin choisie est le plus court
+
+    Args:
+        noeud (Node): Noeud choisie
+        voisin (Node): Noeud voisin
+        cout_chemin (int): Poids du noeud
+        arrivee (Node): Noeud d'arrivé 
+        algo (str): algorithme chosit 
+    """
     if cout_chemin < voisin.cout:
         voisin.cout = cout_chemin
         voisin.precedent = noeud
@@ -197,6 +308,14 @@ def verif_plus_court_chemin(noeud, voisin, cout_chemin, arrivee, algo):
 
 
 def reconstruction_chemin(arrivee):
+    """_summary_
+
+    Args:
+        arrivee (Node): Noeud d'arrivé
+
+    Returns:
+        lst: Liste de noeud correspondant au chemin
+    """
     chemin = []
     noeud = arrivee
     while noeud is not None:

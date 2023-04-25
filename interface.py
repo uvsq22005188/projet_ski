@@ -8,6 +8,12 @@ import graphe
 
 class App(tk.Tk):
     def __init__(self, title, size):
+        """Constructeur de la classe app
+
+        Args:
+            title (str): Titre de la fenetre
+            size (tuple): taille de la fenetre
+        """        
 
         # Configuration principale
 
@@ -51,6 +57,12 @@ class App(tk.Tk):
 
 class Dessin():
     def __init__(self, parent, frame_canvas):
+        """Constructeur de la classe Dessin
+
+        Args:
+            parent (Window): Parent
+            frame_canvas (FrameCanvas): Une frame 
+        """
         self.parent = parent
         self.frame_canvas = frame_canvas
         self.canvas = self.frame_canvas.canvas
@@ -60,6 +72,11 @@ class Dessin():
         self.noeud1, self.noeud2 = None, None
 
     def get_noeuds(self):
+        """Retourne la liste de noeuds
+
+        Returns:
+            lst: liste de noeud 
+        """
         return self.parent.graphe.get_noeuds()
 
     def afficher_graphe(self):
@@ -152,14 +169,20 @@ class Dessin():
         self.pile.append(noeud)
 
     def debut_arete(self, event):
+        """Initilise le début d'une arête en choisisant un noeud comme étant le début
+        """
         self.noeud1 = self.frame_canvas.trouver_noeud_proche(event)
 
     def fin_arete(self, event):
+        """Initilise la fin d'une arête en choisisant un noeud comme étant le noeud d'arrivé
+        """
         self.noeud2 = self.frame_canvas.trouver_noeud_proche(event)
         if self.noeud1 and self.noeud2:
             self.tracer_arete()
 
     def tracer_arete(self):
+        """Permet de dessiner une arête entre deux points du graphe
+        """
         noeud_x1, noeud_y1 = self.noeud1.coords
         noeud_x2, noeud_y2 = self.noeud2.coords
 
@@ -169,6 +192,8 @@ class Dessin():
         self.modifier_arete(arete)
 
     def modifier_arete(self, arete):
+        """Modifie l'arête sélectionnée
+        """
         couleur = self.parent.var_piste.get()
         if couleur in self.liste_couleur:
             self.canvas.itemconfig(arete, width=5, fill=couleur)
@@ -180,6 +205,8 @@ class Dessin():
         self.pile.append(arete)
 
     def retour_arriere(self, event):
+        """Permet d'annuler une modification fais pendant l'édition du graphe
+        """
         element = self.pile.pop()
         if isinstance(element, graphe.Noeud):
             self.canvas.delete(element.id)
@@ -188,7 +215,10 @@ class Dessin():
             self.canvas.delete(element)
 
     def ajouter_arete(self, couleur):
-        """
+        """Permet d'ajouter une arête au graphe en ajoutant sa couleur
+
+        Args:
+            couleur (str): couleur de la piste de ski 
         """
 
         poids = self.calcule_distance(self.noeud1, self.noeud2)
@@ -198,7 +228,14 @@ class Dessin():
             couleur=couleur)
 
     def calcule_distance(self, noeud1, noeud2):
-        """
+        """Renvoie la distance entre deux points du graphe
+
+        Args:
+            noeud1 (Node): Noeud de départ 
+            noeud2 (Node): Noeud d'arrivé
+
+        Returns:
+            int: distance entre deux points
         """
         noeud1_x, noeud1_y = noeud1.coords
         noeud2_x, noeud2_y = noeud2.coords
@@ -206,6 +243,8 @@ class Dessin():
                          (noeud1_y - noeud2_y) ** 2)
 
     def afficher_chemin(self):
+        """Affiche l'itinéraire
+        """
         self.parent.blinking = True
         chemin = self.parent.chemin
         parcours = chemin[0]
@@ -285,6 +324,15 @@ class Fichier():
 class MenuBar(tk.Menu):
     def __init__(self, parent, frame_graphe, frame_canvas, frame_skieur,
                  fichier):
+        """Constructeur de la classe MenuBar
+
+        Args:
+            parent (Window): Parent
+            frame_graphe (Frame Canvas): Frame affichant le graphe
+            frame_canvas (Frame Canvas): Frame affichant la carte
+            frame_skieur (Frame Canvas): frame affichant les options 
+            fichier (str): fichier du graphe
+        """
         super().__init__(parent)
         self.parent = parent
         self.frame_graphe = frame_graphe
@@ -329,6 +377,11 @@ class MenuBar(tk.Menu):
 
 class FrameCanvas(tk.Frame):
     def __init__(self, parent):
+        """Constructeur de la classe FrameCanvas
+
+        Args:
+            parent (Tkinter): Parent de FrameCanvas
+        """
         super().__init__(parent)
         self.parent = parent
         self.depart, self.arrivee = None, None
@@ -395,26 +448,28 @@ class FrameCanvas(tk.Frame):
         return noeud
 
     def choix_depart_arrivee(self):
+        """Choisir le noeud de départ de l'itinéraire
+        """
         self.canvas.delete('chemin')
         self.blinking = False
         self.canvas.bind("<Button-1>", self._choix_depart)
 
     def _choix_depart(self, event):
-        """
+        """Choisir le noeud de départ de l'itinéraire
         """
         self.depart = self.trouver_noeud_proche(event)
         self.canvas.unbind("<Button-1>")
         self.canvas.bind("<Button-1>", self._choix_arrivee)
 
     def _choix_arrivee(self, event):
-        """
+        """Choisir le noeud d'arrivé de l'itinéraire
         """
         self.arrivee = self.trouver_noeud_proche(event)
         self.canvas.unbind("<Button-1>")
         self.recherche_chemin()
 
     def recherche_chemin(self):
-        """
+        """Appplique l'algorithme pour trouver le chemin le plus court selon le choix de l'utilisateur
         """
         niveau_skieur = self.parent.var_skieur.get()
         algo = self.parent.var_algorithme.get()
@@ -444,6 +499,8 @@ class FrameGraphe(tk.Frame):
         self.placement_widget()
 
     def creation_widget(self):
+        """Créer les différents boutons pour les options de création de piste et station
+        """
 
         self.var = tk.StringVar()
 
@@ -496,6 +553,8 @@ class FrameGraphe(tk.Frame):
                                              command=self.choix_point)
 
     def placement_widget(self):
+        """Place les widgets
+        """
 
         for i in range(4):
             self.rowconfigure(i, weight=1)
@@ -519,6 +578,8 @@ class FrameGraphe(tk.Frame):
                                ipady=5, sticky='nsew')
 
     def activer_bind(self):
+        """Bind la création de noeud et arête à la souris
+        """
 
         self.frame_canvas.canvas.bind("<Button-1>", self.dessin.ajouter_noeud)
         self.frame_canvas.canvas.bind(
@@ -529,6 +590,8 @@ class FrameGraphe(tk.Frame):
         self.parent.bind("<Control-z>", self.dessin.retour_arriere)
 
     def desactiver_bind(self):
+        """Désactive le bind de la souris
+        """
 
         self.frame_canvas.canvas.unbind("<Button-1>")
         self.frame_canvas.canvas.unbind("<ButtonPress-3>")
@@ -537,6 +600,8 @@ class FrameGraphe(tk.Frame):
         self.parent.unbind("<Control-z>")
 
     def affichage_frame(self):
+        """Affiche la frame
+        """
         if self.compteur % 2:
             self.grid(row=1, column=0, sticky='nsew')
             self.activer_bind()
@@ -555,6 +620,13 @@ class FrameGraphe(tk.Frame):
 
 class FrameSkieur(tk.Frame):
     def __init__(self, parent, frame_canvas, dessin):
+        """Constructeur de la classe FrameSkieur
+
+        Args:
+            parent (Tkinter): Parent de la frame
+            frame_canvas (FrameTkinter): Frame actuelle
+            dessin (Dessin): Object de la classe Dessin
+        """
         super().__init__(parent)
         self.parent = parent
         self.dessin = dessin
@@ -567,6 +639,8 @@ class FrameSkieur(tk.Frame):
         self.placement_widget()
 
     def creation_widget(self):
+        """création des widgets lors de la sélection de l'itinéraire
+        """
 
         self.b_skieur_experimente = tk.Radiobutton(self,
                                                    text="Skieur Expérimenté",
@@ -598,6 +672,8 @@ class FrameSkieur(tk.Frame):
             command=self.dessin.afficher_chemin)
 
     def placement_widget(self):
+        """Placement des widgets dans la frame
+        """
 
         for i in range(2):
             self.columnconfigure(i, weight=1)
@@ -618,6 +694,8 @@ class FrameSkieur(tk.Frame):
             row=2, column=1, ipadx=5, ipady=5, sticky='nsew')
 
     def affichage_frame(self):
+        """Affiche la frame
+        """
         if self.compteur % 2:
             self.grid(row=1, column=0, sticky='nsew')
         else:
@@ -626,9 +704,13 @@ class FrameSkieur(tk.Frame):
         self.compteur += 1
 
     def choix_niveau(self):
+        """sélectionne le niveau du skieur
+        """
         self.parent.var_skieur.set(self.var_niveau.get())
 
     def choix_algorithme(self):
+        """sélectionne le choix de l'algorithme utilisé
+        """
         self.parent.var_algorithme.set(self.var_algorithme.get())
 
 
