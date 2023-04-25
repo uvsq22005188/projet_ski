@@ -62,29 +62,6 @@ class Graphe:
         return noeuds
 
 
-def creer_graphe():
-    # crée un graphe à 10 sommets avec différentes couleures et différents poids. ne les lie pas tous ensemble
-    noeuds = []
-    for i in range(10):
-        noeuds.append(Noeud(chr(65+i), {}, i))
-    graphe = Graphe(noeuds)
-    graphe.ajouter_arete(graphe.get_noeud(
-        "A"), graphe.get_noeud("B"), 1, 1, "bleu")
-    graphe.ajouter_arete(graphe.get_noeud(
-        "A"), graphe.get_noeud("C"), 2, 2, "rouge")
-    graphe.ajouter_arete(graphe.get_noeud(
-        "B"), graphe.get_noeud("C"), 5, 5, "bleu")
-    graphe.ajouter_arete(graphe.get_noeud(
-        "B"), graphe.get_noeud("D"), 6, 6, "rouge")
-    graphe.ajouter_arete(graphe.get_noeud(
-        "C"), graphe.get_noeud("D"), 8, 8, "télésiège")
-    # graphe.ajouter_arete(graphe.get_noeud("C"), graphe.get_noeud("D"), 8, 8, "noir")
-    graphe.ajouter_arete(graphe.get_noeud(
-        "D"), graphe.get_noeud("E"), 10, 10, "rouge")
-
-    return graphe
-
-
 def dijkstra(graphe, depart, arrivee, niveau_skieur):
     t = time.time()
 
@@ -151,7 +128,7 @@ def astar(graphe, depart, arrivee, niveau_skieur):
             for voisin, (_, poids_voisin, couleur) in graphe.get_voisins(noeud).items():
                 # On calcule le cout du chemin
                 cout_chemin = plus_court_chemin(
-                    graphe, noeud, voisin, poids_voisin, couleur, "e")
+                    noeud, poids_voisin, couleur, "e")
                 # On regarde si le chemin est plus court
                 verif_plus_court_chemin(
                     noeud, voisin, cout_chemin, arrivee, "astar")
@@ -227,14 +204,3 @@ def reconstruction_chemin(arrivee):
         noeud = noeud.precedent
     chemin.reverse()
     return chemin
-
-
-def main():
-    graphe = creer_graphe()
-    depart = graphe.get_noeud("A")
-    arrivee = graphe.get_noeud("E")
-    chemin = dijkstra(graphe, depart, arrivee, "debutant")
-
-
-if __name__ == "__main__":
-    main()
